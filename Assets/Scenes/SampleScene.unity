@@ -14282,13 +14282,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2829060146275203873, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: autoReturnDelay
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2829060146275203873, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: autoReturnToLastHand
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4334314812708720166, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.015
       objectReference: {fileID: 0}
     - target: {fileID: 4334314812708720166, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.255
+      value: 0.821
       objectReference: {fileID: 0}
     - target: {fileID: 4334314812708720166, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_LocalPosition.z
@@ -14326,12 +14334,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: LongSword
       objectReference: {fileID: 0}
-    - target: {fileID: 4334314813405729787, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.082
+    - target: {fileID: 7507978101183706458, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: m_SelectMode
+      value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 4484208065627108173, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
-      propertyPath: m_IsTrigger
+    - target: {fileID: 7507978101183706458, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: m_MovementType
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

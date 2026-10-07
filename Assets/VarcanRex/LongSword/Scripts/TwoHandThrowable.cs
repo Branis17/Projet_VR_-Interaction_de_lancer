@@ -183,7 +183,12 @@ public class TwoHandThrowable : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, lastInteractor.transform.rotation, 8f * Time.deltaTime);
             yield return null;
         } while (distance > 0.03f);
-        if (interactionManager != null && !grab.isSelected) interactionManager.SelectEnter(lastInteractor, grab);
+        if (interactionManager != null && !grab.isSelected)
+        {
+            interactionManager.SelectEnter(
+                (UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor)lastInteractor,
+                (UnityEngine.XR.Interaction.Toolkit.Interactables.IXRSelectInteractable)grab);
+        }
     }
 
     void StopAutomaticReturn()

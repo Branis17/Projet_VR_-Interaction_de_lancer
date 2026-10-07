@@ -80,7 +80,7 @@ MonoBehaviour:
   m_InteractionLayers:
     m_Bits: 1
   m_DistanceCalculationMode: 1
-  m_SelectMode: 0
+  m_SelectMode: 1
   m_FocusMode: 1
   m_CustomReticle: {fileID: 0}
   m_AllowGazeInteraction: 0
@@ -145,7 +145,7 @@ MonoBehaviour:
   m_SnapToColliderVolume: 1
   m_ReinitializeDynamicAttachEverySingleGrab: 1
   m_AttachEaseInTime: 0.15
-  m_MovementType: 2
+  m_MovementType: 0
   m_PredictedVisualsTransform: {fileID: 0}
   m_VelocityDamping: 1
   m_VelocityScale: 1
@@ -228,8 +228,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TwoHandThrowable
   mass: 3
   maxSpeed: 6.3
-  maxRange: 4
+  maxRange: 1
   velocitySampleFrames: 6
+  maxAngularSpeed: 20
+  stabilizeOnImpact: 1
+  impactSpeedThreshold: 1.5
+  impactBounce: 0.15
+  autoReturnToLastHand: 0
+  autoReturnDelay: 0.5
+  autoReturnSpeed: 8
 --- !u!1 &4334314813405729788
 GameObject:
   m_ObjectHideFlags: 0
