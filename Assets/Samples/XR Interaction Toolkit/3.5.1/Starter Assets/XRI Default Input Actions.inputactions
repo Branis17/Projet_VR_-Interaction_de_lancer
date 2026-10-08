@@ -1014,6 +1014,28 @@
                 },
                 {
                     "name": "",
+                    "id": "c3a91e70-4b28-4f6d-9a15-7e2d8b04c6a1",
+                    "path": "<XRController>{LeftHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d4b02f81-5c39-407e-8b26-8f3e9c15d7b2",
+                    "path": "<XRController>{LeftHand}/{Grip}",
+                    "interactions": "Press(behavior=2,pressPoint=0.15)",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "73325635-d9e5-481a-9279-ae7be089422d",
                     "path": "<MetaAimHand>{LeftHand}/indexPressed",
                     "interactions": "",
@@ -2187,6 +2209,28 @@
                     "id": "1ce80054-410d-4112-a332-50faa7fb4f23",
                     "path": "<XRController>{RightHand}/{GripButton}",
                     "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e5c13a92-6d4a-418f-9c37-904fad26e8c3",
+                    "path": "<XRController>{RightHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Select",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f6d24b03-7e5b-4290-ad48-a150be37f9d4",
+                    "path": "<XRController>{RightHand}/{Grip}",
+                    "interactions": "Press(behavior=2,pressPoint=0.15)",
                     "processors": "",
                     "groups": "",
                     "action": "Select",
