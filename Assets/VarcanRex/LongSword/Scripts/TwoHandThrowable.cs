@@ -12,11 +12,6 @@ public class TwoHandThrowable : MonoBehaviour
     public int velocitySampleFrames = 6;
     public float maxAngularSpeed = 20f;
 
-    [Header("Impact")]
-    public bool stabilizeOnImpact = true;
-    public float impactSpeedThreshold = 1.5f;
-    [Range(0f, 1f)] public float impactBounce = 0.15f;
-
     [Header("Retour automatique optionnel")]
     public bool autoReturnToLastHand = false;
     public float autoReturnDelay = 2f;
@@ -132,7 +127,8 @@ public class TwoHandThrowable : MonoBehaviour
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
+            // Stop the throw at the range limit but keep gravity enabled so the object falls.
+            rb.isKinematic = false;
             isThrown = false;
         }
     }
@@ -158,14 +154,6 @@ public class TwoHandThrowable : MonoBehaviour
         rb.angularVelocity = Vector3.ClampMagnitude(lastThrowAngularVelocity, maxAngularSpeed);
         releasePoint = transform.position;
         isThrown = true;
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (!isThrown || !stabilizeOnImpact || collision.relativeVelocity.magnitude < impactSpeedThreshold) return;
-        rb.linearVelocity *= impactBounce;
-        rb.angularVelocity = Vector3.zero;
-        rb.constraints = originalConstraints | RigidbodyConstraints.FreezeRotation;
     }
 
     IEnumerator ReturnToLastHand()
