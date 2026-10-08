@@ -53,10 +53,14 @@ public class HandleHighlight : MonoBehaviour
 
     void Update()
     {
-        if (mat == null) return;
+        if (mat == null || rend == null)
+        {
+            enabled = false;
+            return;
+        }
 
         float target = 0f;
-        if (!grab.isSelected)
+        if (grab != null && !grab.isSelected)
         {
             if (grab.isHovered) target = hoverAlpha;
             else if (alwaysVisible) target = idleAlpha;
@@ -69,6 +73,9 @@ public class HandleHighlight : MonoBehaviour
 
     void SetAlpha(float a)
     {
+        if (mat == null || rend == null)
+            return;
+
         Color c = color;
         c.a = Mathf.Clamp01(a);
         mat.color = c;

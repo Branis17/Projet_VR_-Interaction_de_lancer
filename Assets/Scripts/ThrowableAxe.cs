@@ -30,8 +30,8 @@ public class ThrowableAxe : MonoBehaviour
     float maxThrowDistance = 4f;
 
     [SerializeField]
-    [Tooltip("Distance maximale entre la main et le manche pour pouvoir saisir l'objet.")]
-    float retrieveDistance = 0.5f;
+    [Tooltip("Marge autour du manche, en mètres. La saisie ne fonctionne que sur le manche.")]
+    float retrieveDistance = 0.04f;
 
     [SerializeField]
     [Tooltip("Délai avant le retour au point de départ, une fois l'objet arrêté.")]
@@ -67,24 +67,20 @@ public class ThrowableAxe : MonoBehaviour
 
     const float GrabPadding = 0.03f;
     const float SettleSpeed = 0.35f;
-    static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
     Rigidbody body;
     XRGrabInteractable grab;
     Transform grip;
     Transform handle;
-    Renderer handleRenderer;
-    MaterialPropertyBlock highlightBlock;
-    Color handleColor;
-    bool canHighlight;
 
+    BoxCollider handleGrabCollider;
     Transform grabZone;
     Renderer grabZoneRenderer;
     Material grabZoneMaterial;
     Transform grabHint;
     TextMesh grabHintText;
-    static readonly Color ZoneIdleColor = new Color(0.2f, 0.75f, 1f, 0.22f);
-    static readonly Color ZoneReadyColor = new Color(0.25f, 1f, 0.4f, 0.4f);
+    static readonly Color ZoneIdleColor = new Color(0.2f, 0.85f, 0.35f, 0.28f);
+    static readonly Color ZoneReadyColor = new Color(0.25f, 1f, 0.4f, 0.45f);
     static readonly Color HintColor = new Color(0.55f, 1f, 0.62f, 1f);
 
     readonly List<Collider> grabColliders = new List<Collider>();
@@ -110,16 +106,59 @@ public class ThrowableAxe : MonoBehaviour
         body = GetComponent<Rigidbody>();
         body.isKinematic = true;
         body.useGravity = false;
+        KeepOneRigidbody();
+    }
+
+    void KeepOneRigidbody()
+    {
+        Rigidbody[] bodies = GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            if (bodies[i] != body)
+                DestroyImmediate(bodies[i]);
+        }
+    }
+
+    void KeepPiecesTogether()
+    {
+        Transform head = FindExact("Head");
+        Transform hundle = FindExact("Hundle");
+        if (head == null || hundle == null)
+            return;
+
+        StripOwnPhysics(head.gameObject);
+        StripOwnPhysics(hundle.gameObject);
+
+        if (head.parent != hundle.parent && hundle.parent != null)
+            head.SetParent(hundle.parent, false);
+
+        head.localPosition = Vector3.zero;
+        head.localRotation = Quaternion.identity;
+        head.localScale = Vector3.one;
+        hundle.localPosition = Vector3.zero;
+        hundle.localRotation = Quaternion.identity;
+        hundle.localScale = Vector3.one;
+    }
+
+    static void StripOwnPhysics(GameObject piece)
+    {
+        Rigidbody pieceBody = piece.GetComponent<Rigidbody>();
+        if (pieceBody != null)
+            DestroyImmediate(pieceBody);
+
+        Collider[] colliders = piece.GetComponents<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+            DestroyImmediate(colliders[i]);
     }
 
     void Start()
     {
+        KeepPiecesTogether();
         FitVisualScale();
         measuredLength = Mathf.Max(LongestMeshLength(), 0.05f);
         PlaceGrip();
         BuildColliders();
         ConfigureBody();
-        CacheHighlight();
         CreateGrabGuides();
 
         spawnPosition = transform.position;
@@ -146,7 +185,6 @@ public class ThrowableAxe : MonoBehaviour
         }
 
         listening = false;
-        ClearHighlight();
     }
 
     void Subscribe()
@@ -169,7 +207,6 @@ public class ThrowableAxe : MonoBehaviour
 
         bool held = grab != null && grab.isSelected;
         bool inReach = !held && IsHandNear(InteractorHandedness.None);
-        SetHighlight(inReach);
         UpdateGrabGuides(inReach, held);
 
         if (respawnTimer >= 0f && !held)
@@ -231,10 +268,6 @@ public class ThrowableAxe : MonoBehaviour
 
     bool IsHandNear(InteractorHandedness hand)
     {
-        if (grip == null)
-            return false;
-
-        float maxDistance = retrieveDistance;
         for (int i = 0; i < interactors.Length; i++)
         {
             XRBaseInteractor interactor = interactors[i];
@@ -244,12 +277,21 @@ public class ThrowableAxe : MonoBehaviour
             if (hand != InteractorHandedness.None && interactor.handedness != hand)
                 continue;
 
-            Vector3 point = interactor.GetAttachTransform(grab).position;
-            if (Vector3.Distance(point, grip.position) <= maxDistance)
+            if (IsPointOnHandle(interactor.GetAttachTransform(grab).position))
                 return true;
         }
 
         return false;
+    }
+
+    bool IsPointOnHandle(Vector3 worldPoint)
+    {
+        if (handleGrabCollider == null)
+            return false;
+
+        Vector3 closest = handleGrabCollider.ClosestPoint(worldPoint);
+        float extra = Mathf.Max(retrieveDistance, 0f);
+        return (worldPoint - closest).sqrMagnitude <= extra * extra;
     }
 
     void OnGrabbed(SelectEnterEventArgs args)
@@ -257,7 +299,6 @@ public class ThrowableAxe : MonoBehaviour
         limitThrowDistance = false;
         respawnTimer = -1f;
         heldHand = args.interactorObject.handedness;
-        ClearHighlight();
     }
 
     void OnReleased(SelectExitEventArgs args)
@@ -345,11 +386,8 @@ public class ThrowableAxe : MonoBehaviour
 
     bool CanSelect(IXRSelectInteractor interactor, IXRSelectInteractable interactable)
     {
-        if (grip == null || retrieveDistance <= 0f)
-            return true;
-
         Vector3 point = interactor.GetAttachTransform(interactable).position;
-        return Vector3.Distance(point, grip.position) <= retrieveDistance;
+        return IsPointOnHandle(point);
     }
 
     void ConfigureBody()
@@ -411,32 +449,26 @@ public class ThrowableAxe : MonoBehaviour
 
     void BuildColliders()
     {
-        BoxCollider rootBox = GetComponent<BoxCollider>();
-        if (rootBox != null)
-            DestroyImmediate(rootBox);
-
-        handle = FindNamed("Hundle");
-        if (handle == null)
-            handle = FindNamed("Handle");
-        Transform head = FindNamed("Head");
+        handle = FindExact("Manche");
 
         grabColliders.Clear();
-        if (handle != null)
-            grabColliders.Add(FitBox(handle, GrabPadding));
+        handleGrabCollider = handle != null ? handle.GetComponent<BoxCollider>() : null;
+        if (handleGrabCollider != null)
+            grabColliders.Add(handleGrabCollider);
 
-        // Le composant de saisie ne doit enregistrer que le manche.
-        // La lame reçoit son collider juste après, pour les collisions uniquement.
         ConfigureGrab();
+    }
 
-        if (head != null && head != handle)
-            FitBox(head, 0f);
-
-        if (grabColliders.Count == 0 && grab != null)
+    Transform FindExact(string name)
+    {
+        Transform[] transforms = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < transforms.Length; i++)
         {
-            grabColliders.Add(FitBox(transform, GrabPadding));
-            grab.colliders.Clear();
-            grab.colliders.Add(grabColliders[0]);
+            if (string.Equals(transforms[i].name, name, System.StringComparison.OrdinalIgnoreCase))
+                return transforms[i];
         }
+
+        return null;
     }
 
     BoxCollider FitBox(Transform target, float padding)
@@ -596,63 +628,19 @@ public class ThrowableAxe : MonoBehaviour
         return local;
     }
 
-    void CacheHighlight()
-    {
-        if (handle == null)
-            handle = FindNamed("Hundle");
-
-        handleRenderer = handle != null ? handle.GetComponent<Renderer>() : null;
-        if (handleRenderer == null)
-            handleRenderer = GetComponentInChildren<Renderer>();
-
-        if (handleRenderer == null || handleRenderer.sharedMaterial == null || !handleRenderer.sharedMaterial.HasProperty(BaseColorId))
-            return;
-
-        handleColor = handleRenderer.sharedMaterial.GetColor(BaseColorId);
-        highlightBlock = new MaterialPropertyBlock();
-        canHighlight = true;
-    }
-
-    void SetHighlight(bool enabled)
-    {
-        if (!canHighlight)
-            return;
-
-        if (!enabled)
-        {
-            ClearHighlight();
-            return;
-        }
-
-        float pulse = 0.45f + 0.55f * Mathf.Sin(Time.time * 6f);
-        Color lit = Color.Lerp(handleColor, new Color(1f, 0.82f, 0.35f, handleColor.a), pulse);
-        handleRenderer.GetPropertyBlock(highlightBlock);
-        highlightBlock.SetColor(BaseColorId, lit);
-        handleRenderer.SetPropertyBlock(highlightBlock);
-    }
-
-    void ClearHighlight()
-    {
-        if (handleRenderer != null)
-            handleRenderer.SetPropertyBlock(null);
-    }
-
     void CreateGrabGuides()
     {
-        if (grip == null)
+        if (handleGrabCollider == null)
             return;
 
-        var zoneObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        var zoneObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
         zoneObject.name = "Zone de prise";
         grabZone = zoneObject.transform;
-        grabZone.SetParent(grip, false);
-        grabZone.localPosition = Vector3.zero;
-        grabZone.localRotation = Quaternion.identity;
-        FitZoneScale();
+        FitZoneToHandle();
 
         Collider zoneCollider = zoneObject.GetComponent<Collider>();
         if (zoneCollider != null)
-            Destroy(zoneCollider);
+            DestroyImmediate(zoneCollider);
 
         grabZoneRenderer = zoneObject.GetComponent<Renderer>();
         grabZoneMaterial = CreateTransparentMaterial(ZoneIdleColor);
@@ -662,8 +650,7 @@ public class ThrowableAxe : MonoBehaviour
 
         var hintObject = new GameObject("Message de prise");
         grabHint = hintObject.transform;
-        grabHint.SetParent(grip, false);
-        grabHint.localPosition = Vector3.up * (retrieveDistance + 0.12f);
+        PlaceGrabHint();
 
         grabHintText = hintObject.AddComponent<TextMesh>();
         grabHintText.text = "Tu peux saisir\nSerre la gâchette";
@@ -685,17 +672,39 @@ public class ThrowableAxe : MonoBehaviour
         grabHint.gameObject.SetActive(false);
     }
 
-    void FitZoneScale()
+    void FitZoneToHandle()
     {
-        if (grabZone == null)
+        if (grabZone == null || handleGrabCollider == null)
             return;
 
-        float diameter = Mathf.Max(retrieveDistance, 0.05f) * 2f;
-        Vector3 scale = grabZone.parent != null ? grabZone.parent.lossyScale : Vector3.one;
-        grabZone.localScale = new Vector3(
-            diameter / Mathf.Max(Mathf.Abs(scale.x), 0.0001f),
-            diameter / Mathf.Max(Mathf.Abs(scale.y), 0.0001f),
-            diameter / Mathf.Max(Mathf.Abs(scale.z), 0.0001f));
+        Transform parent = handleGrabCollider.transform;
+        grabZone.SetParent(parent, false);
+        grabZone.localRotation = Quaternion.identity;
+        grabZone.localPosition = handleGrabCollider.center;
+
+        Vector3 scale = parent.lossyScale;
+        float extra = Mathf.Max(retrieveDistance, 0f);
+        Vector3 pad = new Vector3(
+            extra / Mathf.Max(Mathf.Abs(scale.x), 0.0001f),
+            extra / Mathf.Max(Mathf.Abs(scale.y), 0.0001f),
+            extra / Mathf.Max(Mathf.Abs(scale.z), 0.0001f));
+        grabZone.localScale = handleGrabCollider.size + pad * 2f;
+    }
+
+    void PlaceGrabHint()
+    {
+        if (grabHint == null || handleGrabCollider == null)
+            return;
+
+        grabHint.SetParent(handleGrabCollider.transform, false);
+        Vector3 size = handleGrabCollider.size;
+        Vector3 offset = Vector3.right * (size.x * 0.5f + 0.08f);
+        if (size.z <= size.x && size.z <= size.y)
+            offset = Vector3.forward * (size.z * 0.5f + 0.08f);
+        else if (size.y <= size.x && size.y <= size.z)
+            offset = Vector3.up * (size.y * 0.5f + 0.08f);
+
+        grabHint.localPosition = handleGrabCollider.center + offset;
     }
 
     void UpdateGrabGuides(bool inReach, bool held)
