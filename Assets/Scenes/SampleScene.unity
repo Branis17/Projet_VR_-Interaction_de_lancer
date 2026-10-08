@@ -14312,6 +14312,10 @@ PrefabInstance:
       propertyPath: autoReturnToLastHand
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3646029074763392737, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4334314812708720166, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.822
@@ -14355,6 +14359,10 @@ PrefabInstance:
     - target: {fileID: 4334314812708720168, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_Name
       value: LongSword
+      objectReference: {fileID: 0}
+    - target: {fileID: 5910624443106957715, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
+      propertyPath: m_IsKinematic
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7507978101183706458, guid: edccbf15fadd9704cb7a2020a492b120, type: 3}
       propertyPath: m_SelectMode
